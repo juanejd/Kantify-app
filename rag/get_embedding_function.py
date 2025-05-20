@@ -1,13 +1,23 @@
 from langchain_openai import OpenAIEmbeddings
+from langchain.evaluation import load_evaluator
+from dotenv import load_dotenv
+import openai
+import os
+
+# Cargar las variables de entorno
+load_dotenv()
+
+# Obtener la API key de OpenAI
+openai.api_key = os.environ["OPENAI_API_KEY"]
 
 
-def get_embedding_function():
-    """
-    Funcion para convertir los datos de los documentos en vectores
-    y guardar la informacion en una base de datos vectorial
-    """
-    # Embedding de OpenAI
-    embeddings = OpenAIEmbeddings(
-        model="text-embedding-3-large",
-    )
-    return embeddings
+def main():
+    # Obtener el embedding para una palabra
+    embedding_function = OpenAIEmbeddings()
+    vector = embedding_function.embed_query("apple")
+    print(f"Vector for 'apple': {vector}")
+    print(f"Vector length: {len(vector)}")
+
+
+if __name__ == "__main__":
+    main()
