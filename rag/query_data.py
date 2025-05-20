@@ -1,9 +1,11 @@
 import argparse
-from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings
-from langchain_openai import ChatOpenAI
+from langchain.vectorstores.chroma import Chroma
 from langchain.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
+from langchain_community.llms.ollama import Ollama
+from langchain_openai import ChatOpenAI
+
+from get_embedding_function import get_embedding_function
 
 # Cargar las variables de entorno
 load_dotenv()
@@ -26,19 +28,19 @@ def main():
     parser.add_argument("query_text", type=str, help="The query text.")
     args = parser.parse_args()
     query_text = args.query_text
+    query_rag(query_text)
 
-    # Preparamos la base de datos
-    embedding_function = OpenAIEmbeddings()
+
+def query_rag(query_text: str):
+    # Cargamos la base de datos y usamos el embedding de OpenAI
+    embedding_function = get_embedding_function()
     db = Chroma(
         embedding_function=embedding_function,
         persist_directory=CHROMA_PATH,
     )
-
     # Buscamos en la base de datos los documentos mas relevantes en base a la consulta y crear el contexto
-    results = db.similarity_search_with_relevance_scores(query_text, k=3)
-    if len(results) == 0 or results[0][1] < 0.7:
-        print("Unable to find matching results.")
-        return
+    results = db.similarity_search_with_score(query_text, k=5)
+    # results sera una lista de tuplas que retorna el documento y el puntaje de relevancia --> List[Tuple[Document, float]]
 
     # Preparamos el prompt para el modelo de OpenAI
     context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in results])
@@ -49,10 +51,11 @@ def main():
     model = ChatOpenAI()
     response_text = model.predict(prompt)
 
-    # Obtenemos las fuentes de los documentos
+    # Obtenemos las fuentes que se utilizaron para responder la pregunta
     sources = [doc.metadata.get("source", None) for doc, _score in results]
     formatted_response = f"Response: {response_text}\nSources: {sources}"
     print(formatted_response)
+    return formatted_response
 
 
 if __name__ == "__main__":
