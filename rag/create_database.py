@@ -43,8 +43,8 @@ def split_documents(documents: list[Document]):
     Divide el texto en fragmentos más pequeños y manejables. Cada fragmento tiene 1000 letras y comparte 500 letras con el fragmento anterior para no perder el hilo del texto
     """
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=500,
+        chunk_size=800,
+        chunk_overlap=100,
         length_function=len,
         is_separator_regex=False,
     )
@@ -105,20 +105,20 @@ def calculate_chunk_ids(chunks):
         page = chunk.metadata.get("page")
         current_page_id = f"{source}:{page}"
 
-    # si el ID de la pagina actual es el mismo que el anterior, incrementamos el indice del chunk
-    if current_page_id == last_page_id:
-        current_chunk_index += 1
-    else:
-        current_chunk_index = 0
+        # si el ID de la pagina actual es el mismo que el anterior, incrementamos el indice del chunk
+        if current_page_id == last_page_id:
+            current_chunk_index += 1
+        else:
+            current_chunk_index = 0
 
-    # calculamos el id del chunk
-    chunk_id = f"{current_page_id}:{current_chunk_index}"
-    last_page_id = current_page_id
+        # calculamos el id del chunk
+        chunk_id = f"{current_page_id}:{current_chunk_index}"
+        last_page_id = current_page_id
 
-    # Agregamos la pagina en los metadatos
-    chunk.metadata["id"] = chunk_id
+        # Agregamos la pagina en los metadatos
+        chunk.metadata["id"] = chunk_id
 
-    return chunk
+    return chunks
 
 
 def clear_database():
